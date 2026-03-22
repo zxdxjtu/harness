@@ -1,0 +1,11 @@
+{
+  "name": "harness",
+  "description": "SDD (Spec-Driven Development) harness marketplace",
+  "plugins": [
+    {
+      "name": "harness",
+      "description": "Spec-Driven Development harness with auto-loop sprint execution",
+      "path": "."
+    }
+  ]
+}

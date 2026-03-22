@@ -1,17 +1,20 @@
 {
   "name": "harness",
-  "description": "SDD (Spec-Driven Development) harness marketplace",
   "owner": {
     "name": "zxdxjtu",
     "url": "https://github.com/zxdxjtu"
   },
+  "metadata": {
+    "description": "SDD (Spec-Driven Development) harness for high-quality AI engineering",
+    "version": "0.1.0"
+  },
   "plugins": [
     {
       "name": "harness",
-      "description": "Spec-Driven Development harness with auto-loop sprint execution",
-      "source": ".",
+      "source": "./",
+      "description": "Spec-Driven Development harness with auto-loop sprint execution. Pipeline: /proposal -> /tdd-align -> /decompose -> /sprint -> /verify",
       "category": "development",
-      "homepage": "https://github.com/zxdxjtu/harness"
+      "tags": ["sdd", "spec-driven", "tdd", "harness", "sprint", "agent-team"]
     }
   ]
 }

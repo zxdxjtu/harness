@@ -1,11 +1,17 @@
 {
   "name": "harness",
   "description": "SDD (Spec-Driven Development) harness marketplace",
+  "owner": {
+    "name": "zxdxjtu",
+    "url": "https://github.com/zxdxjtu"
+  },
   "plugins": [
     {
       "name": "harness",
       "description": "Spec-Driven Development harness with auto-loop sprint execution",
-      "path": "."
+      "source": ".",
+      "category": "development",
+      "homepage": "https://github.com/zxdxjtu/harness"
     }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "name": "harness",
+  "description": "SDD (Spec-Driven Development) harness for high-quality AI engineering. Guides spec → test → implement → verify workflow with auto-loop sprint execution.",
+  "version": "0.1.0",
+  "author": {
+    "name": "zxdxjtu",
+    "url": "https://github.com/zxdxjtu"
+  },
+  "homepage": "https://github.com/zxdxjtu/harness",
+  "repository": "https://github.com/zxdxjtu/harness",
+  "license": "MIT",
+  "keywords": ["sdd", "spec-driven", "tdd", "harness", "sprint", "agent-team", "quality"]
+}

@@ -68,9 +68,24 @@ Agent(
    Agent(subagent_type: "code-reviewer", run_in_background: true,
      prompt: "Review git diff HEAD~N: immutability, error handling, naming, no hardcoded values")
    ```
-4. **Update tasks.md**: Change completed task status from `pending` → `completed`
-5. **Update progress.md**: Log wave completion with timestamp
-6. **Context Compression**: Compact context to preserve working memory
+4. **Evaluator Checkpoint** (Clone scenario only — if `.harness/baseline/` exists):
+   ```
+   Agent(subagent_type: "general-purpose", run_in_background: true,
+     prompt: "You are an Evaluator Agent. Quick-check the features completed in this wave
+     against the baseline in .harness/baseline/.
+     Use Playwright MCP to:
+     1. Open the dev product at {dev-url from spec}
+     2. Test each newly completed feature against its baseline description
+     3. Score functional completeness and interaction consistency (1-10)
+     4. Write findings to .harness/evidence/{FXXX}/wave-{N}-eval.md
+     If any feature scores < 5, flag it as CRITICAL for the next wave.")
+   ```
+   - Read the Evaluator's wave-eval results before starting the next wave
+   - If CRITICAL issues found → inject fix tasks into the next wave's task list
+   - This is the **Sprint Contract** mechanism: Evaluator and Generator align between waves
+5. **Update tasks.md**: Change completed task status from `pending` → `completed`
+6. **Update progress.md**: Log wave completion with timestamp and Evaluator score (if applicable)
+7. **Context Compression**: Compact context to preserve working memory
 
 ### 5. Doom Loop Detection
 

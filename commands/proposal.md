@@ -30,6 +30,20 @@ Ask the user (via AskUserQuestion) which scenario applies:
 
 This determines what additional context is needed.
 
+## Step 2.5: Baseline Capture (Clone scenario only)
+
+If the user selected **Clone/Replicate**:
+
+1. Ask for the reference product URL (local or remote)
+2. Suggest running `/baseline <url>` to capture a comprehensive baseline first
+3. If baseline already exists (`.harness/baseline/baseline-report.md`), read it and use it to inform the spec
+4. If user wants to skip baseline → warn that clone fidelity may suffer without Evaluator-generated baseline
+
+After baseline is captured, the spec should reference:
+- `.harness/baseline/baseline-report.md` for product overview
+- `.harness/baseline/features/*.md` for individual feature details
+- `.harness/baseline/screenshots/` for visual reference
+
 ## Step 3: Gather Requirements
 
 Based on the user's input and `$ARGUMENTS`, conduct an interactive dialogue to clarify:
@@ -38,7 +52,7 @@ Based on the user's input and `$ARGUMENTS`, conduct an interactive dialogue to c
 2. **Acceptance Criteria**: Concrete, testable conditions (use "When X, then Y" format)
 3. **Invariants**: Rules that must always hold true
 4. **Technical Constraints**: Dependencies, platform requirements, performance targets
-5. **For Clone scenario**: Reference product screenshots/docs, UI fidelity requirements
+5. **For Clone scenario**: Reference baseline report, UI fidelity requirements, Evaluator comparison criteria
 6. **For Incremental scenario**: Which existing modules are affected
 
 Keep asking until ALL acceptance criteria are precise enough to write automated tests for. No vague words like "should", "probably", "try to".
@@ -52,6 +66,12 @@ Pre-answer every question the implementing agent might ask:
 - Known pitfalls and their mitigations
 - File naming conventions to follow
 - Which existing code patterns to match
+- **For Clone scenario**:
+  - Reference product URL: [url]
+  - Development product URL: [url, e.g. http://localhost:3000]
+  - Baseline path: `.harness/baseline/`
+  - Evaluator comparison criteria: [which dimensions matter most]
+  - Acceptable fidelity threshold: [score out of 10, default 7]
 
 ## Step 5: Generate Spec
 
@@ -103,4 +123,8 @@ Present the spec to the user. Explicitly ask:
 **Do NOT proceed until the user approves.** Update spec status to `approved` after approval.
 
 ## Next Step
-After approval, tell the user to run: `/tdd-align FXXX`
+
+After approval:
+- **Clone scenario**: Tell the user the recommended flow is:
+  `/tdd-align FXXX` → `/decompose` → `/sprint` → `/evaluate FXXX` → `/eval-fix FXXX` (if needed)
+- **Other scenarios**: Tell the user to run: `/tdd-align FXXX`

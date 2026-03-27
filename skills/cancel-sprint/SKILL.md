@@ -1,4 +1,5 @@
 ---
+name: cancel-sprint
 description: "Cancel an active sprint loop"
 allowed-tools: ["Bash(test -f .harness/sprint-loop.md:*)", "Bash(rm .harness/sprint-loop.md)", "Read(.harness/sprint-loop.md)"]
 hide-from-slash-command-tool: "true"

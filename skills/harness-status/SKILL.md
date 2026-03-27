@@ -1,4 +1,5 @@
 ---
+name: harness-status
 description: "Restore state, health check, determine current phase, suggest next step"
 ---
 

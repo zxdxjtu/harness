@@ -1,4 +1,5 @@
 ---
+name: help
 description: "Explain Harness plugin and available commands"
 ---
 

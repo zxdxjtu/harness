@@ -1,4 +1,5 @@
 ---
+name: evaluate
 description: "Adversarial evaluation: compare dev product against reference baseline using Playwright MCP"
 argument-hint: "<feature-id e.g. F001> --ref-url <url> --dev-url <url>"
 ---

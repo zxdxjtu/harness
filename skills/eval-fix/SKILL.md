@@ -1,4 +1,5 @@
 ---
+name: eval-fix
 description: "GAN-style fix loop: read eval report → fix gaps → re-evaluate → repeat until convergence"
 argument-hint: "<feature-id e.g. F001> --ref-url <url> --dev-url <url>"
 ---

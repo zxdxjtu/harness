@@ -1,4 +1,5 @@
 ---
+name: proposal
 description: "Start a new feature proposal — guided spec + design generation"
 argument-hint: "[feature description]"
 ---

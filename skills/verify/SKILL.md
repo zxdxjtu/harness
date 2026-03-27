@@ -1,4 +1,5 @@
 ---
+name: verify
 description: "Three-stage verification: V1 unit → V2 integration → V3 E2E + evidence package"
 argument-hint: "<feature-id e.g. F001>"
 ---

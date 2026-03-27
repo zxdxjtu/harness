@@ -1,4 +1,5 @@
 ---
+name: baseline
 description: "Capture baseline of a reference product using Playwright MCP for clone/replicate scenarios"
 argument-hint: "<reference-product-url> [--depth deep|shallow]"
 ---

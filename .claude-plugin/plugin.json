@@ -9,5 +9,6 @@
   "homepage": "https://github.com/zxdxjtu/harness",
   "repository": "https://github.com/zxdxjtu/harness",
   "license": "MIT",
-  "keywords": ["sdd", "spec-driven", "tdd", "harness", "sprint", "agent-team", "quality"]
+  "keywords": ["sdd", "spec-driven", "tdd", "harness", "sprint", "agent-team", "quality"],
+  "skills": ["./skills/"]
 }

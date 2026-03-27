@@ -1,4 +1,5 @@
 ---
+name: decompose
 description: "Decompose tests into atomic task DAG with wave-based parallel execution"
 argument-hint: "<feature-id e.g. F001>"
 ---

@@ -1,4 +1,5 @@
 ---
+name: tdd-align
 description: "Generate three-layer tests from spec — tests are the alignment contract"
 argument-hint: "<feature-id e.g. F001>"
 ---

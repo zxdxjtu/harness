@@ -1,4 +1,5 @@
 ---
+name: sprint
 description: "Execute all tasks with auto-loop until completion — Stop Hook driven"
 argument-hint: "<feature-id e.g. F001> [--max-iterations N]"
 allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-sprint.sh:*)"]

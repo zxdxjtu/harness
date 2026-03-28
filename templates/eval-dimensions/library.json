@@ -1,0 +1,51 @@
+{
+  "name": "Library/Package",
+  "description": "库/包项目评估，侧重 API 设计、文档和向后兼容",
+  "dimensions": [
+    {
+      "id": "api-design",
+      "name": "API Design & Spec Compliance",
+      "weight": 35,
+      "method": "automated",
+      "check": "公开 API 与 spec 定义一致。类型签名正确。参数校验完整。返回值符合预期。"
+    },
+    {
+      "id": "test-coverage",
+      "name": "Test Coverage & Edge Cases",
+      "weight": 25,
+      "method": "automated",
+      "check": "覆盖率 ≥90%。边界值测试。异常输入处理。并发安全测试（如适用）。"
+    },
+    {
+      "id": "backward-compatibility",
+      "name": "Backward Compatibility",
+      "weight": 20,
+      "method": "agent-review",
+      "check": "无 breaking changes（除非 spec 明确要求）。类型导出完整。Deprecation 标记正确。"
+    },
+    {
+      "id": "code-quality",
+      "name": "Code Quality & Maintainability",
+      "weight": 15,
+      "method": "agent-review",
+      "check": "零外部运行时依赖（或最小化）。Tree-shaking 友好。Bundle size 合理。代码可读性。"
+    },
+    {
+      "id": "documentation",
+      "name": "Documentation",
+      "weight": 5,
+      "method": "agent-review",
+      "check": "所有公开 API 有 JSDoc/docstring。README 中 usage 示例与实现一致。CHANGELOG 更新。"
+    }
+  ],
+  "scoring_calibration": {
+    "10": "可直接发布，API 优雅且零缺陷",
+    "8-9": "满足所有需求，文档或边界有微小遗漏",
+    "6-7": "核心 API 可用，部分边界或兼容性有问题",
+    "4-5": "基本可用但 API 设计有显著问题",
+    "2-3": "部分功能可用，多处接口不符合 spec",
+    "1": "库不可用或关键功能缺失"
+  },
+  "convergence_threshold": 7,
+  "stagnation_rounds": 2
+}

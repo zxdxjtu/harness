@@ -1,0 +1,45 @@
+{
+  "name": "Clone/Replicate (Visual)",
+  "description": "参照产品复刻场景，基于 Playwright MCP 视觉/交互对比",
+  "requires": ["playwright-mcp"],
+  "dimensions": [
+    {
+      "id": "functional-completeness",
+      "name": "Functional Completeness",
+      "weight": 40,
+      "method": "playwright",
+      "check": "baseline 中的功能是否全部存在且可用？所有子功能齐全？端到端可完成？"
+    },
+    {
+      "id": "interaction-consistency",
+      "name": "Interaction Consistency",
+      "weight": 25,
+      "method": "playwright",
+      "check": "相同点击 → 相同结果？表单验证一致？导航流程一致？状态转换一致？"
+    },
+    {
+      "id": "visual-fidelity",
+      "name": "Visual Fidelity",
+      "weight": 20,
+      "method": "playwright",
+      "check": "布局匹配？颜色匹配（精确到 hex）？字体匹配？间距匹配？响应式一致？"
+    },
+    {
+      "id": "technical-quality",
+      "name": "Technical Quality",
+      "weight": 15,
+      "method": "agent-review",
+      "check": "性能体感（加载速度）？错误处理（空状态、异常）？Loading states？边界情况？"
+    }
+  ],
+  "scoring_calibration": {
+    "10": "与参照产品无法区分",
+    "8-9": "仅有微小外观差异",
+    "6-7": "功能可用但视觉或行为有偏差",
+    "4-5": "核心功能可用但有显著缺口",
+    "2-3": "功能存在但几乎不可用",
+    "1": "功能缺失或完全损坏"
+  },
+  "convergence_threshold": 7,
+  "stagnation_rounds": 2
+}

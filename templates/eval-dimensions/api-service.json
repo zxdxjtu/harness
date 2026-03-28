@@ -1,0 +1,51 @@
+{
+  "name": "API/Backend Service",
+  "description": "API 和后端服务评估，侧重合约合规、性能和安全",
+  "dimensions": [
+    {
+      "id": "api-contract-compliance",
+      "name": "API Contract Compliance",
+      "weight": 35,
+      "method": "automated",
+      "check": "所有 API 端点与 spec 定义的 request/response schema 一致。状态码正确。错误格式统一。"
+    },
+    {
+      "id": "performance",
+      "name": "Performance",
+      "weight": 20,
+      "method": "automated",
+      "check": "响应时间满足 spec 目标（如 p95 < 200ms）。无 N+1 查询。连接池配置合理。"
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Handling",
+      "weight": 20,
+      "method": "agent-review",
+      "check": "所有错误路径有处理。错误信息不泄露内部细节。重试/降级策略合理。日志完整。"
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "weight": 15,
+      "method": "agent-review",
+      "check": "认证/授权正确。输入校验完整。参数化查询（无 SQL 注入）。Rate limiting 配置。CORS 策略。"
+    },
+    {
+      "id": "code-quality",
+      "name": "Code Quality",
+      "weight": 10,
+      "method": "agent-review",
+      "check": "代码可读性。Repository 模式遵守。无重复代码。单一职责。测试覆盖。"
+    }
+  ],
+  "scoring_calibration": {
+    "10": "完美实现，零缺陷",
+    "8-9": "满足所有合约，微小优化空间",
+    "6-7": "核心合约满足，部分端点或边界有差异",
+    "4-5": "主路径可用，错误处理或安全有显著缺口",
+    "2-3": "部分端点可用，多处合约违反",
+    "1": "服务不可用或关键端点缺失"
+  },
+  "convergence_threshold": 7,
+  "stagnation_rounds": 2
+}

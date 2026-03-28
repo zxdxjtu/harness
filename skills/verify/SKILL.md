@@ -62,8 +62,34 @@ Create `.harness/evidence/$ARGUMENTS/verdict.md`:
 - [list any issues discovered during verification]
 ```
 
+## Stewardship Verification (if module stewardship enabled)
+
+If `.harness/module-graph.json` exists:
+1. Run a final stewardship check across ALL modules affected by this feature
+2. Verify no unresolved CRITICAL or HIGH issues from steward reports
+3. Include stewardship status in the verdict
+
 ## Completion
 
 - Update `.harness/tasks.md`: set feature status to `verified`
 - Update `.harness/progress.md` with verification results
-- Notify user for final acceptance
+
+## Next Step — Auto-Navigate
+
+1. Read the `flow` field from `.harness/specs/{FXXX}-*.md`
+2. Display progress:
+
+```
+📋 SDD 进度 — {FXXX}: {feature name}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ proposal → ✅ tdd-align → ✅ decompose → ✅ sprint → ✅ evaluate → ✅ verify → ⬜ archive
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+验证结果: {PASS/FAIL}
+V1: {pass}/{total} | V2: {pass}/{total} | V3: {pass}/{total} | 覆盖率: {XX}%
+```
+
+If PASS:
+> "验证通过。下一步是 **归档提交**（合并 spec、代码审查、原子 commit、推送）。是否继续？"
+
+If FAIL:
+> "验证未通过（{failed_count} 个测试失败）。需要修复后重新验证。"

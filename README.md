@@ -1,6 +1,6 @@
-# Harness — Spec-Driven Development Plugin for Claude Code
+# Harness — Spec-Driven Development Framework
 
-A Claude Code marketplace plugin that enforces a structured **Spec → Test → Implement → Verify** pipeline for high-quality AI-assisted software engineering.
+A Claude Code plugin for structured **Spec → Test → Implement → Verify** development with adversarial evaluation, module stewardship, and self-evolution.
 
 ## Install
 
@@ -11,121 +11,100 @@ A Claude Code marketplace plugin that enforces a structured **Spec → Test → 
 ## Quick Start
 
 ```bash
-/proposal "Add user authentication with JWT"   # Generate spec + design
-/tdd-align F001                                  # Generate tests (all RED)
-/decompose F001                                  # Break into atomic tasks
-/sprint F001                                     # Auto-execute until done
+# 说一句你要做什么，Agent 会引导你完成整个流程
+/proposal "Add user authentication with JWT"
+
+# 之后每步只需说"继续"，Agent 自动推进
+# 或随时查看进度
+/harness-status
 ```
+
+## 核心特性
+
+- **流程自适应** — 小需求走快速路径，大需求走完整流程（自动评估）
+- **Agent 自动导航** — 每步结束后说"继续"即可，无需记命令名
+- **对抗式评估** — 独立 Evaluator Agent 多维度打分，GAN 式修复循环
+- **模块责任田** — AGENT.md 守护每个模块的边界和质量
+- **自进化** — 模板/流程/记忆随迭代优化
 
 ## Pipeline
 
 ```
-Standard:
-/proposal → /tdd-align → /decompose → /sprint → /verify
-   Spec       Tests        Tasks       Execute    Verify
-  (human)    (human)      (human)      (auto)    (auto)
+按复杂度自适应:
 
-Clone/Replicate (with adversarial evaluation):
-/baseline → /proposal → ... → /sprint → /evaluate → /eval-fix
-  Capture     Spec              Execute   Evaluate    Fix Loop
-  (auto)     (human)            (auto)    (Evaluator) (GAN loop)
+TRIVIAL:  /proposal → implement → verify
+SMALL:    /proposal → /tdd-align → implement → /verify
+MEDIUM:   /proposal → /tdd-align → /decompose → /sprint → /evaluate → /verify → /archive
+LARGE:    /proposal → /spec-review → /tdd-align → /decompose → /sprint → /evaluate → /eval-fix → /verify → /archive
+
+Clone 场景额外: /baseline 采集参考产品基线
 ```
 
-### Phase 1: Spec (`/proposal`)
-Interactive dialogue to produce a complete, unambiguous spec with zero-decision-point checklist. Human approves before proceeding.
+### Phase 1: 需求设计
+- `/sdd-init` — 项目初始化（扫描代码库，生成配置和全量规格）
+- `/proposal` — 需求设计（置信度评估 + 对齐检查 + 流程路由）
+- `/spec-review` — 多人评审（逐行评论 + 自动 resolution）
 
-### Phase 2: Test Alignment (`/tdd-align`)
-Generate three-layer tests from spec:
-- **V1**: Unit tests (logic validation)
-- **V2**: Integration tests (module interaction)
-- **V3**: E2E tests (user perspective)
+### Phase 2: 代码生成
+- `/tdd-align` — 三层测试对齐（V1 单元 / V2 集成 / V3 E2E，全部 RED）
+- `/decompose` — 任务拆解（原子任务 DAG + 模块责任田 AGENT.md）
+- `/sprint` — 自动执行（Stop Hook 驱动 + 三检查点: steward/entropy/evaluator）
 
-All tests start RED. Human approves the test contract.
+### Phase 2.5: 对抗式评估
+- `/evaluate` — 多维度评估（JSON 配置驱动，按项目类型选择维度）
+- `/eval-fix` — GAN 修复循环（收敛/停滞/回退检测）
 
-### Phase 3: Decompose (`/decompose`)
-Break tests into atomic tasks (≤2h each), analyze dependencies, assign parallel execution waves. Human approves the task DAG.
+### Phase 3: 归档
+- `/verify` — 三层验证 + 证据包
+- `/archive` — 合并规格、代码审查、原子 commit、推送
+- `/evolve` — 自进化分析
 
-### Phase 4: Sprint (`/sprint`)
-**Automatic loop execution** — powered by a Stop Hook that keeps Claude running until all tasks complete:
+## 评估维度（按项目类型）
 
-- Parallel execution via worktree-isolated agents
-- Regression testing after each wave
-- Background code quality guardians
-- Doom loop detection (stops on repeated failures)
-- Context compression between waves
-
-### Phase 5: Verify (`/verify`)
-V1 → V2 → V3 staged verification with evidence package.
-
-### Adversarial Evaluation (Clone scenarios)
-
-Inspired by [GAN-style adversarial design](https://www.anthropic.com/engineering/harness-design-long-running-apps) — separate Generator and Evaluator agents to prevent self-assessment bias.
-
-**`/baseline <url>`** — Evaluator Agent explores the reference product via Playwright MCP, captures screenshots, interaction flows, and visual specs into `.harness/baseline/`.
-
-**`/evaluate <id> --ref-url <url> --dev-url <url>`** — Independent Evaluator compares reference vs development product across 4 dimensions:
-
-| Dimension | Weight |
-|-----------|--------|
-| Functional Completeness | 40% |
-| Interaction Consistency | 25% |
-| Visual Fidelity | 20% |
-| Technical Quality | 15% |
-
-**`/eval-fix <id>`** — GAN-style fix loop: Generator fixes gaps → Evaluator re-scores → repeat until convergence or stagnation.
+| 类型 | 核心维度 |
+|------|---------|
+| fullstack | Spec 合规 35% + 架构对齐 25% + 覆盖率 15% + 代码质量 15% + 安全 10% |
+| api-service | 合约合规 35% + 性能 20% + 错误处理 20% + 安全 15% + 代码质量 10% |
+| library | API 设计 35% + 覆盖率 25% + 兼容性 20% + 代码质量 15% + 文档 5% |
+| clone-visual | 功能完整 40% + 交互一致 25% + 视觉还原 20% + 技术质量 15% |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/proposal [desc]` | Start new feature (interactive spec generation) |
-| `/tdd-align <id>` | Generate three-layer tests from spec |
-| `/decompose <id>` | Break into atomic task DAG |
-| `/sprint <id>` | Auto-loop execute all tasks |
-| `/verify <id>` | Three-stage verification |
-| `/harness-status` | Check current state and next step |
-| `/baseline <url>` | Capture reference product baseline (Playwright MCP) |
-| `/evaluate <id>` | Adversarial comparison: reference vs dev product |
-| `/eval-fix <id>` | GAN-style fix-evaluate loop until convergence |
-| `/cancel-sprint` | Stop active sprint loop |
-| `/help` | Show documentation |
+| `/sdd-init` | 初始化项目 Harness |
+| `/proposal [desc]` | 需求设计（spec + 置信度 + 流程路由） |
+| `/spec-review <id>` | 多人评审 spec |
+| `/tdd-align <id>` | 三层测试对齐 |
+| `/decompose <id>` | 任务拆解 + 模块责任田 |
+| `/sprint <id>` | 自动执行（三检查点） |
+| `/evaluate <id>` | 多维度对抗评估 |
+| `/eval-fix <id>` | GAN 修复循环 |
+| `/verify <id>` | 三层验证 + 证据包 |
+| `/archive <id>` | 归档提交 + 触发自进化 |
+| `/evolve` | 自进化分析 |
+| `/baseline <url>` | 采集参考产品基线 |
+| `/harness-status` | 查看进度 + 建议下一步 |
+| `/cancel-sprint` | 停止 Sprint |
+| `/help` | 完整文档 |
 
 ## Project State
 
-Harness stores state in `.harness/` (auto-created):
-
 ```
 .harness/
-├── specs/          # Feature specifications
-├── designs/        # Design documents
-├── baseline/       # Reference product baseline (clone scenarios)
-│   ├── baseline-report.md
-│   ├── screenshots/
-│   └── features/
-├── tasks.md        # Task DAG
-├── progress.md     # Progress log
-├── evidence/       # Verification + evaluation evidence
-│   └── FXXX/
-│       ├── eval-report.md
-│       ├── eval-screenshots/
-│       └── eval-loop-state.md
-└── sprint-loop.md  # Sprint state (runtime)
+├── config.json          # 项目配置
+├── full-spec.md         # 全量规格
+├── full-design.md       # 全量设计
+├── specs/               # Feature 增量 spec
+├── designs/             # Feature 增量 design
+├── reviews/             # Spec 评审制品
+├── tasks.md             # 任务 DAG
+├── progress.md          # 进度日志
+├── module-graph.json    # 模块依赖图
+├── baseline/            # 参考产品基线
+├── evidence/FXXX/       # 验证 + 评估证据
+└── evolution/           # 自进化数据
 ```
-
-Add `.harness/` to `.gitignore` or commit it — your choice.
-
-## Use Cases
-
-- **New projects**: Full pipeline from idea to delivery
-- **Cloning products**: Baseline capture → spec → pipeline → adversarial evaluation
-- **Incremental features**: Add features to existing codebases
-
-## Core Principles
-
-1. **Spec → Test → Code** — Tests are the alignment contract
-2. **Atomic Tasks** — Each independently implementable and testable
-3. **Closed-Loop Verification** — Evidence-driven delivery
-4. **Context Discipline** — File system as lossless memory
 
 ## License
 

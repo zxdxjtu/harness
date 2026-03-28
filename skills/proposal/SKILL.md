@@ -1,6 +1,6 @@
 ---
 name: proposal
-description: "Start a new feature proposal — guided spec + design generation"
+description: "Start a new feature proposal — guided spec + design generation with confidence assessment and flow routing"
 argument-hint: "[feature description]"
 ---
 
@@ -8,11 +8,18 @@ argument-hint: "[feature description]"
 
 You are guiding the user through a structured proposal process. The goal is to produce a complete, unambiguous spec that an AI agent can execute without asking questions.
 
+**Parameter**: $ARGUMENTS — feature description (optional)
+
 ## Step 1: Initialize
 
-Create `.harness/` directory if it doesn't exist:
+Check if harness is initialized:
 ```bash
-mkdir -p .harness/specs .harness/designs .harness/evidence
+ls .harness/config.json 2>/dev/null
+```
+
+If not initialized, suggest running `/sdd-init` first. If user wants to skip init, create minimal structure:
+```bash
+mkdir -p .harness/specs .harness/designs .harness/evidence .harness/reviews .harness/evolution
 ```
 
 Determine the next feature ID by checking existing specs:
@@ -74,58 +81,128 @@ Pre-answer every question the implementing agent might ask:
   - Evaluator comparison criteria: [which dimensions matter most]
   - Acceptable fidelity threshold: [score out of 10, default 7]
 
-## Step 5: Generate Spec
+## Step 5: Confidence Assessment
 
-Write the spec to `.harness/specs/FXXX-[name].md`:
+For each AC and key design decision, assess confidence:
 
-```markdown
-# Feature: [Name]
-## ID: FXXX | Status: draft | Priority: [P0/P1/P2]
+| Decision | Confidence | Rationale | Action |
+|----------|-----------|-----------|--------|
+| {AC or decision} | HIGH/MEDIUM/LOW | {reason} | Proceed/Clarify |
 
-## User Story
-As [role], I need [capability], so that [value]
+Rules:
+- **HIGH**: Clear requirements, standard pattern, no ambiguity → proceed
+- **MEDIUM**: Reasonable assumption but not explicitly confirmed → note assumption, proceed with caveat
+- **LOW**: Missing info, multiple interpretations possible → MUST clarify with user before proceeding
 
-## Acceptance Criteria
-- AC-1: When [condition], then [result]
-- AC-2: When [condition], then [result]
+If any item is LOW, use AskUserQuestion to resolve it NOW. Do not generate a spec with LOW-confidence items unresolved.
 
-## Invariants
-- INV-1: [rule that must always hold]
+## Step 6: Spec-Design Alignment Check
 
-## Technical Constraints
-- Platform: [requirements]
-- Dependencies: [list with versions]
-- Performance: [targets]
+If `.harness/full-design.md` exists (project was initialized with `/sdd-init`):
 
-## Zero-Decision-Point Checklist
-- Test data: [path or generation method]
-- Mock strategy: [what to mock]
-- Environment: [KEY=VALUE]
-- Known pitfalls: [issue → mitigation]
-- Code patterns: [which existing patterns to follow]
+Launch an alignment sub-agent (background) to cross-check:
+1. Does the new spec conflict with existing architecture in full-design.md?
+2. Does the spec introduce dependencies that violate existing module boundaries?
+3. Are there existing components that can be reused instead of building new?
 
-## Design Notes
-[Architecture decisions, data flow, component structure]
+Report findings as:
+- **Conflicts**: {list of conflicts with existing design}
+- **Reuse Opportunities**: {existing code/modules that can be leveraged}
+- **New Modules Needed**: {modules that don't exist yet}
+
+Present alignment findings to user before generating the spec.
+
+## Step 7: Generate Spec
+
+Write the spec to `.harness/specs/FXXX-[name].md` using the template from `templates/spec-template.md`.
+
+Key additions to the spec frontmatter:
+```yaml
+---
+id: FXXX
+name: "{feature name}"
+status: draft
+priority: P1
+complexity: ""    # Will be filled in Step 9
+flow: []          # Will be filled in Step 9
+scenario: "{new|clone|incremental}"
+created: "{ISO timestamp}"
+---
 ```
 
-## Step 6: Generate Design (optional)
+Include the Confidence Assessment table in the spec body.
 
-If the feature is non-trivial, also generate `.harness/designs/FXXX-[name].md` with:
-- Component/module breakdown
-- Data flow diagram (ASCII)
-- API contracts
-- State management approach
+## Step 8: Generate Design (if non-trivial)
 
-## Step 7: Request Approval
+If the feature has 3+ ACs or touches multiple modules, generate `.harness/designs/FXXX-[name].md` using the template from `templates/design-template.md`.
+
+## Step 9: Request Approval
 
 Present the spec to the user. Explicitly ask:
 > "This spec defines N acceptance criteria and M invariants. Can an agent implement this without asking you any questions? If not, what's missing?"
 
 **Do NOT proceed until the user approves.** Update spec status to `approved` after approval.
 
-## Next Step
+## Step 10: Flow Routing — Determine SDD Complexity
 
-After approval:
-- **Clone scenario**: Tell the user the recommended flow is:
-  `/tdd-align FXXX` → `/decompose` → `/sprint` → `/evaluate FXXX` → `/eval-fix FXXX` (if needed)
-- **Other scenarios**: Tell the user to run: `/tdd-align FXXX`
+After approval, assess the feature complexity and determine which SDD phases are needed:
+
+### Complexity Assessment
+
+Evaluate based on:
+- **Number of ACs**: 1-2 → likely trivial/small, 3-8 → medium, 8+ → large
+- **Modules affected**: 1 module → smaller, multiple → larger
+- **Risk level**: Config change → trivial, new API → medium, architecture change → large
+- **Confidence**: All HIGH → can be simpler, any MEDIUM → needs more process
+
+### Flow Routing
+
+```
+📌 TRIVIAL (改配置、修 typo、单文件小改动)
+   complexity: trivial
+   flow: [implement, verify]
+
+📌 SMALL (1-3 个 AC，单模块，高确定性)
+   complexity: small
+   flow: [tdd-align, implement, verify]
+
+📌 MEDIUM (3-8 个 AC，跨模块)
+   complexity: medium
+   flow: [tdd-align, decompose, sprint, evaluate, verify, archive]
+
+📌 LARGE (8+ AC，架构变更，高风险)
+   complexity: large
+   flow: [spec-review, tdd-align, decompose, sprint, evaluate, eval-fix, verify, archive]
+```
+
+For **Clone scenario**, always include `evaluate` in the flow.
+
+Present the routing decision to user:
+> "根据需求分析，判断复杂度为 **{complexity}**，建议流程: {flow list with descriptions}。是否同意？可以调整。"
+
+User can:
+- Confirm → write complexity and flow to spec frontmatter
+- Upgrade → use more complete flow
+- Downgrade → use simpler flow
+- Customize → pick specific phases
+
+Update the spec frontmatter with final `complexity` and `flow` values.
+
+## Next Step — Auto-Navigate
+
+1. Read the `flow` field from the spec just approved
+2. Display progress visualization:
+
+```
+📋 SDD 进度 — {FXXX}: {feature name}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ proposal  →  ⬜ {next_phase}  →  ⬜ ...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+当前阶段: proposal (需求规格设计) ✅ 已完成
+下一阶段: {next_phase} ({description})
+```
+
+3. Ask naturally: "{spec summary}。下一步是 **{next phase name}**（{description}）。是否继续？"
+4. If user says yes/继续/好的 → execute the next phase's skill logic directly
+5. If user says skip → mark phase as skipped, advance to the one after
+6. If user says wait → stop and let user take control

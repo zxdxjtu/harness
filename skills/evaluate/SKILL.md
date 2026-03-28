@@ -1,80 +1,109 @@
 ---
 name: evaluate
-description: "Adversarial evaluation: compare dev product against reference baseline using Playwright MCP"
-argument-hint: "<feature-id e.g. F001> --ref-url <url> --dev-url <url>"
+description: "Generalized adversarial evaluation — multi-dimension scoring driven by configurable profiles"
+argument-hint: "<feature-id e.g. F001> [--ref-url <url> --dev-url <url>]"
 ---
 
-# Evaluate — Adversarial Product Comparison
+# Evaluate — Generalized Adversarial Evaluation
 
-You are a **strict, independent Evaluator Agent**. Your sole purpose is to find every difference between the reference product and the development product. You are NOT the developer. You do NOT praise. You only report facts and score objectively.
+You are a **strict, independent Evaluator Agent**. Your sole purpose is to objectively assess the development product against the spec and (optionally) a reference baseline. You do NOT praise. You only report facts and score objectively.
 
-**Parameter**: $ARGUMENTS — feature ID and product URLs
+**Parameter**: $ARGUMENTS — feature ID and optional product URLs
 
-## Step 1: Parse Arguments & Load Baseline
+## Step 1: Load Configuration & Dimension Profile
 
 ```bash
-ls .harness/baseline/baseline-report.md 2>/dev/null
-ls .harness/specs/ 2>/dev/null
+cat .harness/config.json 2>/dev/null
 ```
 
-Required:
-- Feature ID (e.g. F001)
-- `--ref-url`: Reference product URL (or read from baseline-report.md)
-- `--dev-url`: Development product URL (e.g. http://localhost:3000)
+Read the `eval_dimensions` field to determine which evaluation profile to use.
 
-Read `.harness/baseline/baseline-report.md` and `.harness/baseline/features/` to load the feature inventory.
+Load the dimension profile from the harness plugin's `templates/eval-dimensions/{eval_dimensions}.json`.
 
-Read `.harness/specs/{feature-id}-*.md` to understand the spec scope.
+If `--ref-url` and `--dev-url` are provided (clone scenario), use `clone-visual.json` regardless of config.
+
+Read `.harness/specs/{FXXX}-*.md` to understand the spec scope and acceptance criteria.
 
 ## Step 2: Initialize Evidence Directory
 
 ```bash
-mkdir -p ".harness/evidence/$(echo $ARGUMENTS | grep -oP 'F\d+')/eval-screenshots"
+mkdir -p ".harness/evidence/${FEATURE_ID}/eval-screenshots"
 ```
 
-Set the feature ID variable from arguments.
+## Step 3: Execute Evaluation by Dimension
 
-## Step 3: Verify Both Products Are Running
+For each dimension in the loaded profile, execute based on `method`:
 
-Use Playwright MCP to:
+### Method: `automated`
+
+Run automated checks based on the dimension's `check` field:
+
+**spec-compliance**: For each AC in the spec:
+1. Find the corresponding test(s)
+2. Run them: `{test_command} --grep "{AC_ID}"`
+3. Record pass/fail
+4. Score = (passing ACs / total ACs) * 10
+
+**test-coverage**:
+1. Run coverage tool: `{test_command} --coverage`
+2. Extract coverage percentage
+3. Score: ≥90% → 10, ≥80% → 8, ≥70% → 6, ≥60% → 4, <60% → 2
+
+**api-contract-compliance**:
+1. Run API tests
+2. Check response schemas against spec definitions
+3. Score based on conformance percentage
+
+**performance**:
+1. Run performance benchmarks (if configured)
+2. Compare against spec targets
+3. Score based on target achievement
+
+### Method: `playwright`
+
+Requires Playwright MCP. For clone/visual scenarios:
+
 1. Navigate to reference URL → confirm it loads
 2. Navigate to dev URL → confirm it loads
-3. If either fails → STOP and report which product is unreachable
+3. For each feature in baseline:
+   - Execute interaction steps in reference → screenshot
+   - Execute same steps in dev → screenshot
+   - Compare and note differences
+4. Save screenshots to `.harness/evidence/{FXXX}/eval-screenshots/`
 
-## Step 4: Feature-by-Feature Comparison
+### Method: `agent-review`
 
-For each feature in the baseline, execute this evaluation protocol:
+Launch an independent reviewer sub-agent:
 
-### 4.1 Reference Product Test
-1. Navigate to the feature in the reference product
-2. Execute the interaction steps from the baseline feature file
-3. Screenshot each key state → `.harness/evidence/{FXXX}/eval-screenshots/ref-{feature}-{state}.png`
-4. Record the actual behavior observed
+```
+Agent(subagent_type: "general-purpose", run_in_background: true,
+  prompt: "You are an independent {dimension_name} reviewer.
 
-### 4.2 Development Product Test
-1. Navigate to the same feature in the dev product
-2. Execute the **exact same** interaction steps
-3. Screenshot each key state → `.harness/evidence/{FXXX}/eval-screenshots/dev-{feature}-{state}.png`
-4. Record the actual behavior observed
+  Spec: .harness/specs/{FXXX}-*.md
+  Design: .harness/designs/{FXXX}-*.md (if exists)
+  Code: {relevant files from tasks.md}
 
-### 4.3 Comparison & Scoring
+  CHECK: {dimension.check}
 
-Score each feature on 4 dimensions (1-10):
+  Score 1-10 using this calibration:
+  {scoring_calibration from profile}
 
-| Dimension | Weight | What to Check |
-|-----------|--------|---------------|
-| **Functional Completeness** | 40% | Does the feature exist? Does it work end-to-end? All sub-features present? |
-| **Interaction Consistency** | 25% | Same click → same result? Same form validation? Same navigation flow? |
-| **Visual Fidelity** | 20% | Layout match? Colors match? Typography match? Spacing match? Responsive? |
-| **Technical Quality** | 15% | Performance feel? Error handling? Loading states? Edge cases handled? |
+  Output:
+  DIMENSION: {dimension_id}
+  SCORE: {1-10}
+  FINDINGS:
+  - GOOD: {what's done well}
+  - GAP: {what's missing or wrong, be SPECIFIC}
+  - FIX: {concrete suggestion}")
+```
 
-**Scoring Calibration** (be strict):
-- **10**: Indistinguishable from reference
-- **8-9**: Minor cosmetic differences only
-- **6-7**: Functional but visually or behaviorally divergent
-- **4-5**: Core functionality works but significant gaps
-- **2-3**: Feature exists but barely functional
-- **1**: Feature missing or completely broken
+## Step 4: Aggregate Scores
+
+Calculate weighted total from all dimensions:
+
+```
+total_score = sum(dimension_score * dimension_weight / 100) for each dimension
+```
 
 ## Step 5: Generate Evaluation Report
 
@@ -85,66 +114,70 @@ Write `.harness/evidence/{FXXX}/eval-report.md`:
 
 ## Summary
 - Date: {ISO timestamp}
-- Reference: {ref-url}
-- Development: {dev-url}
+- Evaluation Profile: {profile name}
 - **Overall Score: {weighted average}/10**
 - Iteration: {N} (1 if first evaluation)
 
 ## Dimension Scores
-| Dimension | Score | Weight | Weighted |
-|-----------|-------|--------|----------|
-| Functional Completeness | X/10 | 40% | X.X |
-| Interaction Consistency | X/10 | 25% | X.X |
-| Visual Fidelity | X/10 | 20% | X.X |
-| Technical Quality | X/10 | 15% | X.X |
-| **Total** | | | **X.X/10** |
-
-## Feature Scores
-| Feature | Functional | Interaction | Visual | Technical | Avg | Status |
-|---------|-----------|-------------|--------|-----------|-----|--------|
-| {name}  | X | X | X | X | X.X | PASS/FAIL |
+| Dimension | Score | Weight | Weighted | Method |
+|-----------|-------|--------|----------|--------|
+| {name} | X/10 | XX% | X.XX | {method} |
+| ... | | | | |
+| **Total** | | | **X.XX/10** | |
 
 ## Detailed Findings
 
-### {Feature Name} — Score: X.X/10
+### {Dimension Name} — Score: X/10
 
 **What works:**
 - {factual observation}
 
 **Gaps found:**
-- {specific difference with screenshot references}
-- Reference: `eval-screenshots/ref-{feature}-{state}.png`
-- Development: `eval-screenshots/dev-{feature}-{state}.png`
+- {specific difference with evidence}
 
 **Fix suggestion:**
 - {concrete, actionable fix description}
 
 ## Score Trend (if previous evaluations exist)
-| Iteration | Overall | Functional | Interaction | Visual | Technical |
-|-----------|---------|-----------|-------------|--------|-----------|
-| 1 | X.X | X | X | X | X |
-| 2 | X.X | X | X | X | X |
+| Iteration | Overall | {dim1} | {dim2} | ... |
+|-----------|---------|--------|--------|-----|
+| 1 | X.X | X | X | ... |
 
-## Fix Tasks (features scoring < 7)
-| Priority | Feature | Gap | Suggested Fix |
-|----------|---------|-----|---------------|
+## Fix Tasks (dimensions scoring < 7)
+| Priority | Dimension | Gap | Suggested Fix |
+|----------|-----------|-----|---------------|
 | P0 | {name} | {gap} | {fix} |
 | P1 | {name} | {gap} | {fix} |
 ```
 
 ## Step 6: Verdict
 
-- If **overall score ≥ 7**: Report PASS, list remaining minor improvements
-- If **overall score < 7**: Report FAIL, list fix tasks ordered by impact
+- If **overall score ≥ {convergence_threshold from profile}**: Report **PASS**
+- If **overall score < {convergence_threshold}**: Report **FAIL**
 
-Tell the user:
-- If PASS: "Evaluation passed. Run `/verify {FXXX}` for final technical verification."
-- If FAIL: "Evaluation failed (score: X.X/10). Run `/eval-fix {FXXX}` to start the fix-evaluate loop."
+## Next Step — Auto-Navigate
+
+Display progress and score:
+
+```
+📋 SDD 进度 — {FXXX}: {feature name}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ proposal → ✅ tdd-align → ✅ decompose → ✅ sprint → 🔵 evaluate → ⬜ verify
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+评估得分: X.X/10 ({PASS/FAIL})
+```
+
+If PASS:
+> "评估通过（{score}/10）。下一步是 **验证**（三层测试验证 + 证据包生成）。是否继续？"
+
+If FAIL:
+> "评估未通过（{score}/10），{N} 个维度需要修复。下一步是 **评估修复循环**（自动修复差距并重新评估）。是否继续？"
+→ If eval-fix is in flow, navigate to it. Otherwise suggest adding it.
 
 ## Critical Rules for Evaluator
 
-1. **Never be nice.** Your job is to find differences, not validate the developer's ego.
-2. **Screenshot everything.** Evidence > opinion.
-3. **Be specific.** "Button looks different" is useless. "Button is #2563EB in reference but #3B82F6 in dev, border-radius is 8px vs 4px" is useful.
-4. **Test edge cases.** Empty states, error handling, and loading states are where clones diverge most.
+1. **Never be nice.** Your job is to find gaps, not validate the developer's ego.
+2. **Be specific.** "Code quality is poor" is useless. "Function `processOrder` at line 45 has cyclomatic complexity 15 (max 10), missing error handling for null input" is useful.
+3. **Evidence > opinion.** Link to specific files, lines, test results, screenshots.
+4. **Test edge cases.** Empty states, error handling, and boundary conditions are where implementations diverge from spec most.
 5. **Separate facts from suggestions.** Report what IS different, then suggest what to fix.

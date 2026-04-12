@@ -9,6 +9,104 @@ set -euo pipefail
 HOOK_INPUT=$(cat)
 
 SPRINT_STATE=".harness/sprint-loop.md"
+EVOLUTION_LOG=".harness/evolution-log.md"
+INVARIANTS_FILE=".harness/invariants.md"
+TRACES_FILE=".harness/traces/events.jsonl"
+
+# ─── Auto-evolution: runs when sprint completes ───
+# Observe → diagnose → evolve, embedded in sprint lifecycle.
+run_auto_evolution() {
+  local feature="$1"
+  local iterations="$2"
+
+  # Skip if no traces
+  [[ -f "$TRACES_FILE" ]] || return 0
+
+  local NOW
+  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+  # ── Observe: collect failure signals ──
+  local ERROR_COUNT=0
+  local LOOP_FILES=""
+  local FAILED_TASKS=0
+
+  ERROR_COUNT=$(jq 'select(.is_error == true)' "$TRACES_FILE" 2>/dev/null | wc -l | tr -d ' ')
+
+  # Files edited 5+ times (potential loop indicator)
+  LOOP_FILES=$(jq -r 'select(.event_type == "file_modify") | .input' "$TRACES_FILE" 2>/dev/null \
+    | sort | uniq -c | sort -rn | awk '$1 >= 5 {print $1 "x " $2}' | head -5)
+
+  if [[ -f ".harness/tasks.md" ]]; then
+    FAILED_TASKS=$(grep -c '| failed |' .harness/tasks.md 2>/dev/null || echo 0)
+  fi
+
+  # ── Diagnose: classify patterns ──
+  local PATTERNS=""
+  local PATTERN_COUNT=0
+
+  if [[ -n "$LOOP_FILES" ]]; then
+    PATTERNS="${PATTERNS}file-loop: ${LOOP_FILES}\n"
+    PATTERN_COUNT=$((PATTERN_COUNT + 1))
+  fi
+
+  if [[ $FAILED_TASKS -gt 0 ]]; then
+    PATTERNS="${PATTERNS}failed-tasks: ${FAILED_TASKS} tasks failed\n"
+    PATTERN_COUNT=$((PATTERN_COUNT + 1))
+  fi
+
+  if [[ $ERROR_COUNT -gt 10 ]]; then
+    PATTERNS="${PATTERNS}high-error-rate: ${ERROR_COUNT} tool errors\n"
+    PATTERN_COUNT=$((PATTERN_COUNT + 1))
+  fi
+
+  # ── Evolve: append to evolution log ──
+  mkdir -p "$(dirname "$EVOLUTION_LOG")"
+
+  cat >> "$EVOLUTION_LOG" <<EVOLOG
+
+## $NOW — Sprint 完成自动进化 ($feature)
+
+- 迭代次数: $iterations
+- 错误事件: $ERROR_COUNT
+- 失败任务: $FAILED_TASKS
+- 发现模式: $PATTERN_COUNT 个
+EVOLOG
+
+  if [[ -n "$LOOP_FILES" ]]; then
+    echo "- 高频编辑文件:" >> "$EVOLUTION_LOG"
+    echo -e "$LOOP_FILES" | while read -r line; do
+      echo "  - $line" >> "$EVOLUTION_LOG"
+    done
+  fi
+
+  # ── Promote to invariant if pattern seen 3+ times ──
+  if [[ -f "$EVOLUTION_LOG" ]] && [[ -f "$INVARIANTS_FILE" ]]; then
+    # Count how many times "file-loop" pattern appears across sprints
+    local LOOP_HISTORY
+    LOOP_HISTORY=$(grep -c "file-loop:" "$EVOLUTION_LOG" 2>/dev/null || echo 0)
+
+    if [[ $LOOP_HISTORY -ge 3 ]]; then
+      if ! grep -q "INV-AUTO-LOOP" "$INVARIANTS_FILE" 2>/dev/null; then
+        cat >> "$INVARIANTS_FILE" <<INVEOF
+
+### INV-AUTO-LOOP: 高频文件编辑检测
+- **规则**: 同一文件被编辑 5 次以上时，停下来重新审视方案，不要继续硬调
+- **来源**: 自动进化（$LOOP_HISTORY 次 Sprint 观测到此模式）
+- **注入目标**: sprint
+- **动作**: 编辑文件前检查是否已经反复修改，如果是则换一个实现思路
+INVEOF
+        echo "- **新增不变量**: INV-AUTO-LOOP (高频编辑检测)" >> "$EVOLUTION_LOG"
+      fi
+    fi
+  fi
+
+  # Summary line to progress
+  if [[ -f ".harness/progress.md" ]]; then
+    echo "$NOW Evolution: $PATTERN_COUNT patterns, $ERROR_COUNT errors, $FAILED_TASKS failed tasks" >> .harness/progress.md
+  fi
+
+  echo "Evolution: analyzed sprint ($PATTERN_COUNT patterns detected)" >&2
+}
 
 # No active sprint → allow exit
 if [[ ! -f "$SPRINT_STATE" ]]; then
@@ -68,6 +166,7 @@ if [[ -f "$TRANSCRIPT_PATH" ]]; then
   # Check for completion promise
   if echo "$LAST_OUTPUT" | grep -q '<promise>ALL_TASKS_DONE</promise>'; then
     echo "Sprint complete: all tasks done for $FEATURE."
+    run_auto_evolution "$FEATURE" "$ITERATION"
     rm "$SPRINT_STATE"
     exit 0
   fi
@@ -82,6 +181,7 @@ if [[ -f ".harness/tasks.md" ]]; then
 
   if [[ $PENDING -eq 0 ]] && [[ $TOTAL -gt 0 ]]; then
     echo "Sprint: All tasks resolved ($COMPLETED completed, $FAILED failed)."
+    run_auto_evolution "$FEATURE" "$ITERATION"
     rm "$SPRINT_STATE"
     exit 0
   fi

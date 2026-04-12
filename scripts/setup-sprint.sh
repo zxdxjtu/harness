@@ -8,7 +8,6 @@ set -euo pipefail
 # Parse arguments
 FEATURE_ID=""
 MAX_ITERATIONS=30
-PROMPT_PARTS=()
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -70,8 +69,17 @@ if [[ ! -f ".harness/tasks.md" ]]; then
   exit 1
 fi
 
-# Create sprint loop state file
-mkdir -p .harness
+# Create directories and rotate trace file
+mkdir -p .harness .harness/traces .harness/evidence
+
+# Rotate trace file: archive previous sprint's trace
+if [[ -f ".harness/traces/events.jsonl" ]]; then
+  ARCHIVE_NAME="events-$(date -u +%Y%m%d-%H%M%S).jsonl"
+  mv ".harness/traces/events.jsonl" ".harness/traces/$ARCHIVE_NAME"
+fi
+
+# Reset context injection tracking for new sprint
+rm -f .harness/.injected-context
 
 cat > .harness/sprint-loop.md <<EOF
 ---

@@ -62,6 +62,19 @@ Create `.harness/evidence/$ARGUMENTS/verdict.md`:
 - [list any issues discovered during verification]
 ```
 
+## Pitfalls Collection
+
+After verification, review the entire feature development for lessons learned:
+
+1. Read `.harness/pitfalls.md` (if exists)
+2. Review all issues found during V1/V2/V3 — any surprising failures or non-obvious fixes should become pitfalls
+3. Review `.harness/evidence/$ARGUMENTS/verdict.md` — any AC that required multiple attempts
+4. Append new pitfalls to `.harness/pitfalls.md`:
+   - Format: `- [module/area]: concise pitfall description`
+   - One fact per line, no fluff
+   - Do NOT duplicate existing entries
+   - Only record **non-obvious** pitfalls (things you can't deduce from reading the code)
+
 ## Completion
 
 - Update `.harness/tasks.md`: set feature status to `verified`

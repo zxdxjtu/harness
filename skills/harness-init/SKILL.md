@@ -350,6 +350,26 @@ mkdir -p .harness/skill-context
 <!-- 自进化引擎会在这里追加新的不变量 -->
 ```
 
+### 3.6 `.harness/pitfalls.md`（项目踩坑记录）
+
+初始化一个空的 pitfalls 文件。如果在仓库探索阶段发现了明显的坑（比如 README 中的注意事项、CONTRIBUTING.md 中的警告），预填入：
+
+```markdown
+# Pitfalls
+
+> 项目中的已知坑。一行一条，精简到一句话。
+> 自动维护：Sprint 中发现的新坑会自动追加。也可以手动编辑。
+
+{如果仓库分析中发现了注意事项，每条一行：}
+- [模块]: 坑的描述
+```
+
+pitfalls.md 与 invariants.md 的区别：
+- **pitfalls.md**: 轻量级，即时记录，一行一条事实，无需验证
+- **invariants.md**: 结构化，需要 3+ 次重复失败才提升，有证据链和检测方法
+- pitfalls 是"经验直觉"，invariants 是"验证过的规律"
+- 两者互补：pitfalls 可能在多次验证后被提升为 invariant
+
 ---
 
 ## Phase 4: Hook 和 Guardian 配置
@@ -399,14 +419,17 @@ mkdir -p .harness/skill-context
 - `.harness/config.yaml` — 项目配置
 - `.harness/norms.md` — 团队规范
 - `.harness/invariants.md` — 不变量注册表
+- `.harness/pitfalls.md` — 踩坑记录（可手动预填已知坑）
 
 **下一步**:
 1. 审查 `.harness/config.yaml`，调整不准确的配置
 2. 审查 `.harness/norms.md`，补充遗漏的规范
-3. 运行 `/proposal` 开始第一个功能
+3. （可选）在 `.harness/pitfalls.md` 中添加你已知的项目坑
+4. 运行 `/proposal` 开始第一个功能
 
 **提示**: Harness 会在 Sprint 过程中持续学习。
-失败模式会被自动沉淀为新的不变量，提高后续执行质量。
+- 踩到的坑自动记录到 pitfalls.md（即时生效）
+- 重复出现 3 次的失败模式自动提升为不变量（结构化约束）
 ```
 
 ---

@@ -32,7 +32,9 @@ Before any execution, load project-specific context:
 
 3. **Invariants**: Read `.harness/invariants.md` + `.harness/skill-context/sprint-invariants.md` (if exists) to load learned constraints. **These MUST be injected into every Worker Agent prompt.**
 
-4. **Tracing**: Ensure `.harness/traces/` directory exists for JSONL event logging
+4. **Pitfalls**: Read `.harness/pitfalls.md` (if exists) — lightweight, one-fact-per-line project pitfalls. These complement invariants (which require 3+ occurrences). Pitfalls are immediate observations. **Inject into every Worker Agent prompt.**
+
+5. **Tracing**: Ensure `.harness/traces/` directory exists for JSONL event logging
 
 If config doesn't exist, use defaults (mode=automatic, workers=auto, threshold=3).
 
@@ -65,18 +67,23 @@ Agent(
 
   Steps:
   1. Read the spec: .harness/specs/{feature}.md
-  2. Read the test files, locate {test_ids}
-  3. Read .harness/invariants.md — you MUST obey all listed invariants
-  4. Implement code to make tests pass (follow norms in .harness/norms.md)
-  5. Run: {testing.run_command from config} --grep '{task_id}'
-  6. If GREEN: commit with 'feat({task_id}): {task_name}'
-  7. If RED after 3 attempts: report failure with root cause analysis
+  2. Read .harness/pitfalls.md — review ALL pitfalls before writing code
+  3. Read the test files, locate {test_ids}
+  4. Read .harness/invariants.md — you MUST obey all listed invariants
+  5. Implement code to make tests pass (follow norms in .harness/norms.md, avoid known pitfalls!)
+  6. Run: {testing.run_command from config} --grep '{task_id}'
+  7. If GREEN: commit with 'feat({task_id}): {task_name}'
+  8. If RED after 3 attempts: report failure with root cause analysis
 
   RULES:
   - Do NOT modify test files
   - Do NOT modify files outside your task scope
   - Do NOT skip tests
   - OBEY all invariants in .harness/invariants.md
+  - If you hit a NEW pitfall (something surprising or non-obvious), include it in your failure/completion report as [NEW PITFALL]
+
+  KNOWN PITFALLS (from .harness/pitfalls.md):
+  {inject contents of .harness/pitfalls.md if exists}
 
   KNOWN FAILURE PATTERNS (learned from previous sprints):
   {inject contents of .harness/skill-context/sprint-invariants.md if exists}"
@@ -119,13 +126,20 @@ Agent(
    - This is the **Sprint Contract** mechanism: Evaluator and Generator align between waves
 5. **Update tasks.md**: Change completed task status from `pending` → `completed`
 6. **Update progress.md**: Log wave completion with timestamp and Evaluator score (if applicable)
-7. **Context Compression**: Compact context to preserve working memory
+7. **Pitfalls Collection**: Review this wave's execution for new pitfalls:
+   - Any task that failed and was retried → extract the root cause as a pitfall
+   - Any worker report containing `[NEW PITFALL]` → extract and append
+   - Any unexpected behavior that wasn't in the spec → record it
+   - Append new pitfalls to `.harness/pitfalls.md` (one fact per line, concise)
+   - Format: `- [module/area]: pitfall description`
+   - Do NOT duplicate entries already in pitfalls.md
+8. **Context Compression**: Compact context to preserve working memory
 
 ### 5. Doom Loop Detection
 
 Track in `.harness/sprint-loop.md`:
-- If a task fails 3+ times → mark as `failed`, skip it, log to progress
-- If consecutive_failures ≥ 3 across tasks → STOP sprint, report to user
+- If a task fails 3+ times → mark as `failed`, skip it, log to progress, **extract the root cause and append to `.harness/pitfalls.md`**
+- If consecutive_failures ≥ 3 across tasks → STOP sprint, report to user, **write all failure root causes to pitfalls.md before stopping**
 - Same file edited > 6 times without test progress → STOP
 
 ### 6. Completion
@@ -133,7 +147,13 @@ Track in `.harness/sprint-loop.md`:
 When ALL tasks in tasks.md are `completed`:
 1. Run `/verify {feature-id}` (full V1→V2→V3)
 2. Update tasks.md: feature status = `verified`
-3. Output completion signal:
+3. **Lifecycle Cleanup** — archive session-scoped files:
+   - `mkdir -p .harness/archive`
+   - Move `.harness/tasks.md` → `.harness/archive/{feature-id}-tasks.md`
+   - Move `.harness/progress.md` → `.harness/archive/{feature-id}-progress.md`
+   - Remove `.harness/decisions/`, `.harness/attempts/`, `.harness/research/` (if they exist)
+   - **Keep**: `.harness/pitfalls.md`, `.harness/invariants.md`, `.harness/config.yaml`, `.harness/norms.md`, `.harness/specs/`, `.harness/evidence/`, `.harness/traces/`, `.harness/evolution-log.md`, `.harness/skill-context/`
+4. Output completion signal:
 
 <promise>ALL_TASKS_DONE</promise>
 

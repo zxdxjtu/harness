@@ -22,6 +22,13 @@ Create `.harness/` directory if it doesn't exist:
 mkdir -p .harness/specs .harness/designs .harness/evidence
 ```
 
+Check for existing pitfalls:
+```bash
+cat .harness/pitfalls.md 2>/dev/null || echo "No pitfalls recorded yet."
+```
+
+If `.harness/pitfalls.md` exists, keep its contents in mind — these are known pitfalls that agents have repeatedly hit in this project. They MUST be incorporated into the Zero-Decision-Point Checklist of the spec.
+
 Determine the next feature ID by checking existing specs:
 ```bash
 ls .harness/specs/ 2>/dev/null | grep -oP 'F\d+' | sort -t'F' -k2 -n | tail -1
@@ -71,7 +78,7 @@ Pre-answer every question the implementing agent might ask:
 - Test data: how to generate or where to find
 - Mock strategy: which external calls to mock
 - Environment variables needed
-- Known pitfalls and their mitigations
+- **Known pitfalls**: Read `.harness/pitfalls.md` and filter entries relevant to this feature's domain (same modules, same tech, same patterns). Include them verbatim in the spec. Add any new pitfalls the user mentions.
 - File naming conventions to follow
 - Which existing code patterns to match
 ## Step 4.5: Define Evaluation Criteria
@@ -144,7 +151,7 @@ Pass threshold: [X/10]
 - Test data: [path or generation method]
 - Mock strategy: [what to mock]
 - Environment: [KEY=VALUE]
-- Known pitfalls: [issue → mitigation]
+- Known pitfalls: [auto-populated from .harness/pitfalls.md + new items for this feature]
 - Code patterns: [which existing patterns to follow]
 
 ## Design Notes

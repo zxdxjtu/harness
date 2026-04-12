@@ -1,7 +1,14 @@
-# Harness Core — 通用内核
+# Harness Core — 自进化通用内核
 
 > 与业务场景解耦。适用于任何从 0 到 1 的 AI 编码项目。
+> 因地制宜：通过 `/harness-init` 学习仓库和团队规范，生成定制化配置。
+> 自进化：从 Sprint 失败中自动提取不变量，从工作历史中发现可封装的重复模式。
 > 业务相关逻辑通过插件机制加装（见 `harness-plugin-*.md`）。
+>
+> ### 自进化三要素
+> 1. **结晶学习** — 失败 → 模式 → 不变量 → 注入执行层
+> 2. **技能发现** — 工作历史 → 重复模式 → 新 Skill
+> 3. **上下文路由** — 编辑文件 → 自动注入相关知识碎片
 
 ---
 
@@ -118,7 +125,7 @@ Agent 实现时可能需要问人的信息，全部预写在这里：
 
 ```
 输入: tests-aligned 的测试清单
-输出: 原子任务 DAG（写入 harness-tasks.json）
+输出: 原子任务 DAG（写入 tasks.md）
 
 规则:
 - 每个任务 ≤ 2h Agent 工作量
@@ -129,26 +136,19 @@ Agent 实现时可能需要问人的信息，全部预写在这里：
 
 ### 4.2 任务注册表结构
 
-```json
-{
-  "project": "项目名",
-  "features": [{
-    "id": "F001",
-    "status": "implementing",
-    "tasks": [{
-      "id": "T001",
-      "name": "任务描述",
-      "tests": ["T001-V1"],
-      "status": "pending|in_progress|done|failed",
-      "blockedBy": [],
-      "wave": 1,
-      "assignee": null,
-      "retries": 0,
-      "output": { "files": [], "commit": null, "testsPassed": false }
-    }]
-  }]
-}
+任务存储在 `.harness/tasks.md`（Markdown 表格格式），人类可读且可编辑：
+
+```markdown
+# Tasks — F001
+
+| ID | Name | Wave | Status | Tests | Retries | BlockedBy | Files |
+|----|------|------|--------|-------|---------|-----------|-------|
+| T001 | 实现用户模型 | 1 | pending | T001-V1 | 0 | - | src/models/user.ts |
+| T002 | 实现认证逻辑 | 2 | pending | T002-V1,T002-V2 | 0 | T001 | src/auth/login.ts |
 ```
+
+> **注意**: 之前版本的文档描述了 JSON 格式的任务注册表。
+> 实际实现使用 Markdown 表格，因为：(1) 人类可读可编辑；(2) Git diff 友好；(3) 所有 Skill 已基于此格式实现。
 
 ### 4.3 Wave 执行模型
 
@@ -309,12 +309,12 @@ LOW      → 忽略：不阻断流程
 2. **任务完成即压缩** — 每完成一个原子任务，主动 `/compact`
 3. **文件系统无损存储** — 决策、方案、中间产物写文件，不留在上下文
 4. **SubAgent 隔离** — 探索/调研/审查用 SubAgent，不污染主上下文
-5. **恢复靠文件** — harness-tasks.json + progress.txt + git log
+5. **恢复靠文件** — tasks.md + progress.txt + git log
 
-## 八、Evaluator 对抗机制（GAN-Inspired）
+## 八、Evaluator 对抗机制
 
 ### 设计理念
-受 GAN（生成对抗网络）启发，将生产和评估分离为独立的 Agent 角色。
+将生产和评估分离为独立的 Agent 角色。
 核心洞察：让同一个 Agent 自评其工作会产生"自信偏差"——Agent 倾向于赞美自己的产出。
 分离 Evaluator 后，可以独立调校其严格程度，比让 Generator 自我批评更有效。
 
@@ -367,7 +367,7 @@ Evaluator Agent + Playwright MCP
   → 生成 eval-report.md + 对比截图
 ```
 
-#### Phase 6: GAN 修复循环 `/eval-fix`
+#### Phase 6: 对抗修复循环 `/eval-fix`
 ```
 循环:
   1. Generator 读 eval-report，修复差异
@@ -421,7 +421,7 @@ docs/harness-plugin-{name}.md     # 插件文档
 
 ### Law 1: 工作不耗尽
 - 任务粒度 ≤ 2h，wave 自动推进
-- harness-tasks.json 是唯一真相
+- tasks.md 是唯一真相
 
 ### Law 2: 零决策点
 - Spec 零决策点清单：预写所有外部依赖

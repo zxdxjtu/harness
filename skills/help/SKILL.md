@@ -9,91 +9,90 @@ Explain the following to the user:
 
 ## What is Harness?
 
-Harness is a Spec-Driven Development (SDD) framework for AI-assisted software engineering. It enforces a structured pipeline that ensures high-quality, verifiable code delivery:
+Harness 是一个自进化的 AI 辅助开发框架。你只需要告诉它做什么，它会自动走完 Spec → 测试 → 分解 → 执行 → 验证的全流程。
+
+## 你只需要记住一个命令
 
 ```
-/proposal → /tdd-align → /decompose → /sprint → /verify
-   Spec       Tests        Tasks       Execute    Verify
-  (human)    (human)      (human)      (auto)    (auto)
-
-Clone/Replicate scenario adds adversarial evaluation:
-/baseline → /proposal → ... → /sprint → /evaluate → /eval-fix
-  Capture     Spec              Execute   Evaluate    Fix Loop
-  (auto)     (human)            (auto)    (Evaluator) (GAN loop)
+/harness 实现用户登录功能
 ```
 
-**Core Principles:**
-1. **Spec → Test → Code** — Tests are the alignment contract, code is the artifact
-2. **Atomic Tasks** — Each task independently implementable, testable, mergeable
-3. **Closed-Loop Verification** — Evidence-driven, no "I think it's done"
-4. **Context Discipline** — File system as lossless memory, aggressive compression
+Harness 会自动：
+1. 了解你的项目（首次使用时）
+2. 和你讨论需求、生成 Spec（需要你确认）
+3. 生成测试合约（需要你确认）
+4. 分解任务、按 Wave 并行执行（全自动）
+5. 三阶段验证并输出证据（全自动）
+6. 从失败中学习，下次做得更好（全自动）
 
-## Available Commands
+整个过程你只需要参与 **2 次**：确认 Spec + 确认测试。
 
-### `/proposal [description]`
-Start a new feature. Guides you through requirements gathering and produces a complete spec with zero-decision-point checklist. **Requires human approval.**
+## 用法
 
-### `/tdd-align <feature-id>`
-Generate three-layer tests (V1 unit, V2 integration, V3 E2E) from the approved spec. All tests start RED. **Requires human approval.**
+| 命令 | 作用 |
+|------|------|
+| `/harness 功能描述` | 从想法到交付，全流程 |
+| `/harness status` | 查看状态，接着干 |
+| `/harness init` | 仅初始化（了解项目和团队规范） |
+| `/harness evolve` | 手动看一下进化状态 |
+| `/harness` | 自动判断该做什么 |
+| `/cancel-sprint` | 紧急停止正在跑的 Sprint |
 
-### `/decompose <feature-id>`
-Break tests into atomic tasks (≤2h each), analyze dependencies, assign execution waves. Produces a task DAG. **Requires human approval.**
+## 核心原则
 
-### `/sprint <feature-id> [--max-iterations N]`
-Execute all tasks automatically. Uses a Stop Hook to loop until all tasks complete. Each wave runs in parallel using worktree-isolated agents. Includes:
-- Automatic regression testing after each wave
-- Background code quality guardians
-- Doom loop detection (stops on repeated failures)
-- Context compression between waves
+1. **Spec → Test → Code** — 测试是人和 AI 的对齐合约
+2. **原子任务** — 每个任务独立可测、可并行
+3. **闭环验证** — 有证据才算完成
+4. **自进化** — Sprint 失败自动沉淀为不变量，下次避免
+5. **对抗分离** — 写代码的和审代码的不是同一个 Agent
 
-### `/verify <feature-id>`
-Run V1→V2→V3 verification and produce an evidence package.
+## 自进化机制
 
-### `/harness-status`
-Check current state, determine which phase you're in, suggest next step.
+**你不需要手动触发进化。** Harness 在以下时机自动学习：
 
-### `/baseline <reference-url> [--depth deep|shallow]`
-Capture a comprehensive baseline of a reference product using Playwright MCP. Generates screenshots, feature docs, and a baseline report. **Used before `/proposal` in clone scenarios.**
+- **Sprint 完成时**：分析 JSONL 追踪日志，提取失败模式
+- **任务失败时**：记录结构化失败原因
+- **同一模式出现 3 次**：自动提升为不变量，注入后续 Sprint
 
-### `/evaluate <feature-id> --ref-url <url> --dev-url <url>`
-Adversarial evaluation: an independent Evaluator Agent compares the dev product against the reference product. Scores on 4 dimensions (functional completeness, interaction consistency, visual fidelity, technical quality). Generates a detailed gap report with screenshot evidence.
+进化结果保存在 `.harness/invariants.md` 和 `.harness/evolution-log.md`。
 
-### `/eval-fix <feature-id> --ref-url <url> --dev-url <url>`
-GAN-style adversarial loop: reads the eval report, fixes gaps, re-evaluates, repeats until convergence (score ≥ 7) or stagnation. Automatically detects score plateaus and regression.
+## 高级用法
 
-### `/cancel-sprint`
-Stop an active sprint loop.
+以下命令供了解内部机制的用户使用，普通使用不需要：
 
-## Project State Directory
+| 命令 | 作用 | 何时需要 |
+|------|------|---------|
+| `/proposal` | 单独编写 Spec | 想精细控制需求阶段 |
+| `/tdd-align F001` | 单独生成测试 | 想单独审查测试 |
+| `/decompose F001` | 单独分解任务 | 想调整任务粒度 |
+| `/sprint F001` | 单独跑 Sprint | 想从中间阶段继续 |
+| `/verify F001` | 单独跑验证 | 想重新验证 |
+| `/adversarial-review F001` | 对抗式代码审查 | 想在合并前深度审查 |
+| `/baseline <url>` | 采集参照产品基线 | 克隆场景 |
+| `/evaluate F001` | 对标评估 | 克隆场景 |
+| `/eval-fix F001` | GAN 修复循环 | 克隆场景评分不够 |
 
-Harness stores state in `.harness/` in your project root:
+## 项目状态目录
+
+所有状态保存在 `.harness/`，可 gitignore 或 commit：
+
 ```
 .harness/
-├── specs/          # Feature specifications
-├── designs/        # Design documents
-├── baseline/       # Reference product baseline (clone scenarios)
-│   ├── baseline-report.md
-│   ├── screenshots/
-│   └── features/
-├── tasks.md        # Task DAG (Markdown)
-├── progress.md     # Progress log
-├── evidence/       # Verification + evaluation evidence
-│   └── FXXX/
-│       ├── eval-report.md        # Evaluator comparison report
-│       ├── eval-screenshots/     # Side-by-side comparison screenshots
-│       └── eval-loop-state.md    # Fix-evaluate loop state
-└── sprint-loop.md  # Sprint loop state (runtime only)
+├── config.yaml          # 项目配置
+├── norms.md             # 团队规范
+├── invariants.md        # 学到的约束（自动增长）
+├── specs/               # 功能规格
+├── tasks.md             # 任务 DAG
+├── progress.md          # 进度日志
+├── evidence/            # 验证证据
+├── traces/              # JSONL 事件追踪
+├── skill-context/       # 上下文注入碎片
+└── evolution-log.md     # 进化历史
 ```
 
-## When to Use
+## 提示
 
-- **New projects**: Full pipeline from spec to delivery
-- **Cloning products**: Spec from reference product, then full pipeline
-- **Incremental features**: Add specs for new features in existing codebases
-
-## Tips
-
-- Keep specs precise: "When X, then Y" — no vague language
-- Review tests carefully — they ARE the contract
-- Trust the sprint loop — it will iterate until complete
-- Check `/harness-status` when resuming work in a new session
+- 描述需求时尽量具体："实现邮箱密码登录，支持 GitHub OAuth"
+- 测试审查环节多花 2 分钟看清楚——测试是合约
+- Sprint 跑起来后你可以去做别的事
+- 新会话输入 `/harness` 即可恢复上下文

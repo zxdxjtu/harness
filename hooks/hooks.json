@@ -1,5 +1,5 @@
 {
-  "description": "Harness sprint loop stop hook",
+  "description": "Harness lifecycle hooks — sprint loop, tracing, context routing",
   "hooks": {
     "Stop": [
       {
@@ -7,6 +7,28 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-sprint-trace.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/context-router.sh",
+            "timeout": 5
           }
         ]
       }

@@ -45,6 +45,7 @@ Harness 会自动：
 3. **闭环验证** — 有证据才算完成
 4. **自进化** — Sprint 失败自动沉淀为不变量，下次避免
 5. **对抗分离** — 写代码的和审代码的不是同一个 Agent
+6. **Pitfalls 记忆** — 模型不需要项目变迁历史，只需要"现状"和"哪些坑别踩"
 
 ## 自进化机制
 
@@ -78,17 +79,46 @@ Harness 会自动：
 
 ```
 .harness/
-├── config.yaml          # 项目配置
-├── norms.md             # 团队规范
-├── invariants.md        # 学到的约束（自动增长）
-├── specs/               # 功能规格
-├── tasks.md             # 任务 DAG
-├── progress.md          # 进度日志
-├── evidence/            # 验证证据
-├── traces/              # JSONL 事件追踪
-├── skill-context/       # 上下文注入碎片
-└── evolution-log.md     # 进化历史
+├── config.yaml          # 项目配置（项目级，永久保留）
+├── norms.md             # 团队规范（项目级）
+├── pitfalls.md          # 踩坑记录（项目级，跨 feature 持久保留）
+├── invariants.md        # 学到的约束（项目级，自动增长）
+├── specs/               # 功能规格（项目级）
+├── evidence/            # 验证证据（项目级）
+├── traces/              # JSONL 事件追踪（项目级）
+├── skill-context/       # 上下文注入碎片（项目级）
+├── evolution-log.md     # 进化历史（项目级）
+├── tasks.md             # 任务 DAG（Feature 级，完成后归档）
+├── progress.md          # 进度日志（Feature 级，完成后归档）
+├── archive/             # 已归档的 tasks/progress
+└── sprint-loop.md       # Sprint 运行状态（Session 级，自动清理）
 ```
+
+**建议 commit**: `pitfalls.md`、`invariants.md`、`specs/`、`config.yaml`、`norms.md`
+
+## Pitfalls 机制
+
+`.harness/pitfalls.md` 是轻量级的项目踩坑记录，与 invariants（重量级不变量）互补：
+
+| | pitfalls.md | invariants.md |
+|---|---|---|
+| **门槛** | 即时记录，无需验证 | 同一模式 3 次失败才提升 |
+| **格式** | 一行一条 | 结构化（规则+证据+检测方法） |
+| **维护** | 自动收集 + 手动编辑 | 自进化引擎自动管理 |
+| **本质** | 经验直觉 | 验证过的规律 |
+
+**自动流转**: `/proposal` 读取 → worker 读取 → wave 完成后收集 → 失败时提取 → `/verify` 收集
+
+**手动编辑**: 随时可以直接编辑 `.harness/pitfalls.md`，格式：`- [模块]: 一句话描述`
+
+## 文件生命周期
+
+Feature 完成后，harness 自动清理：
+- `tasks.md`、`progress.md` → 归档到 `archive/`
+- `decisions/`、`attempts/`、`research/` → 删除
+- `pitfalls.md`、`invariants.md`、`specs/`、`evidence/` → **永久保留**
+
+这样下一个 feature 从干净状态开始，不会被陈旧 plan 误导。
 
 ## 提示
 
@@ -96,3 +126,5 @@ Harness 会自动：
 - 测试审查环节多花 2 分钟看清楚——测试是合约
 - Sprint 跑起来后你可以去做别的事
 - 新会话输入 `/harness` 即可恢复上下文
+- 开新项目时先在 `pitfalls.md` 里写几条已知坑，能省很多 agent 试错时间
+- Feature 完成后检查自动收集的 pitfalls，去重保留有价值的

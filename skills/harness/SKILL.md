@@ -122,9 +122,13 @@ Sprint 完成后自动执行 `/verify {feature-id}`。
 
 **证据**: .harness/evidence/{feature-id}/verdict.md
 
+**Pitfalls**: 本次新增 {N} 条踩坑记录（总计 {M} 条）
+**已归档**: tasks.md → archive/{feature-id}-tasks.md
+
 **接下来？**
 - 输入 `/harness 下一个功能描述` 开始新功能
 - 输入 `/harness status` 查看全景
+- 检查 `.harness/pitfalls.md`，去重保留有价值的经验
 ```
 
 ---

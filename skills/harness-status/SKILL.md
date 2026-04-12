@@ -30,9 +30,10 @@ If no config exists, suggest running `/harness-init` first for optimal experienc
 3. Read tasks: Read `.harness/tasks.md` (if exists)
 4. Read progress (last 50 lines): Read `.harness/progress.md` offset from end
 5. Check sprint loop: Read `.harness/sprint-loop.md` (if exists)
-6. Check invariants: Read `.harness/invariants.md` (if exists) for learned constraints
-7. Check traces: Count events in `.harness/traces/events.jsonl` (if exists)
-8. Recent git history: `git log --oneline -20`
+6. Read pitfalls: Read `.harness/pitfalls.md` (if exists) — lightweight project pitfalls
+7. Check invariants: Read `.harness/invariants.md` (if exists) for learned constraints
+8. Check traces: Count events in `.harness/traces/events.jsonl` (if exists)
+9. Recent git history: `git log --oneline -20`
 
 ## Step 3: Output Summary
 
@@ -41,6 +42,7 @@ For each feature, report:
 - Test status (how many RED/GREEN)
 - Task status (pending/in_progress/completed/failed counts per wave)
 - Sprint loop status (active/inactive, iteration count)
+- Pitfalls count (N known pitfalls recorded) — list them if ≤ 10, otherwise show count + categories
 
 ## Step 4: Determine Phase
 

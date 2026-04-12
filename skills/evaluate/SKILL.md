@@ -59,7 +59,11 @@ For each feature in the baseline, execute this evaluation protocol:
 
 ### 4.3 Comparison & Scoring
 
-Score each feature on 4 dimensions (1-10):
+**First, read the evaluation criteria from the Spec**: `.harness/specs/{feature-id}-*.md` → `## Evaluation Criteria` section. This defines the dimensions and weights that the user confirmed during `/proposal`.
+
+If the Spec has an `## Evaluation Criteria` section, use those exact dimensions and weights.
+
+If NOT (older spec without evaluation criteria), fall back to these defaults and inform the user:
 
 | Dimension | Weight | What to Check |
 |-----------|--------|---------------|

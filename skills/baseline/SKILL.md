@@ -26,7 +26,7 @@ Parse arguments:
 Confirm Playwright MCP is available by attempting a browser action. If unavailable, STOP and tell the user:
 
 > Playwright MCP is required for baseline capture. Please install it:
-> `npm install -g @anthropic-ai/mcp-playwright` and add it to your MCP config.
+> Please install a Playwright MCP server and add it to your MCP config.
 
 ## Step 3: Systematic Exploration
 

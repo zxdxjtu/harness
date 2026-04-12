@@ -17,6 +17,25 @@ You are now in sprint mode. The Stop Hook will keep you running until all tasks 
 
 ## Sprint Execution Protocol
 
+### 0. Load Configuration & Invariants
+
+Before any execution, load project-specific context:
+
+1. **Config**: Read `.harness/config.yaml` to determine:
+   - `sprint.mode` (conservative/automatic/aggressive)
+   - `sprint.parallel_workers` (1/2/4/auto)
+   - `sprint.doom_loop_threshold`
+   - `testing.run_command` and `testing.coverage_command`
+   - `guardian.severity_threshold`
+
+2. **Norms**: Read `.harness/norms.md` to understand team conventions
+
+3. **Invariants**: Read `.harness/invariants.md` + `.harness/skill-context/sprint-invariants.md` (if exists) to load learned constraints. **These MUST be injected into every Worker Agent prompt.**
+
+4. **Tracing**: Ensure `.harness/traces/` directory exists for JSONL event logging
+
+If config doesn't exist, use defaults (mode=automatic, workers=auto, threshold=3).
+
 ### 1. Read State
 
 Read `.harness/tasks.md` and determine the current wave (first wave with any `pending` tasks).
@@ -42,19 +61,25 @@ Agent(
 
   TASK: {task_id} — {task_name}
   TESTS TO PASS: {test_ids}
+  PROJECT NORMS: {norms_summary from .harness/norms.md}
 
   Steps:
   1. Read the spec: .harness/specs/{feature}.md
   2. Read the test files, locate {test_ids}
-  3. Implement code to make tests pass
-  4. Run: [test command] --grep '{task_id}'
-  5. If GREEN: commit with 'feat({task_id}): {task_name}'
-  6. If RED after 3 attempts: report failure
+  3. Read .harness/invariants.md — you MUST obey all listed invariants
+  4. Implement code to make tests pass (follow norms in .harness/norms.md)
+  5. Run: {testing.run_command from config} --grep '{task_id}'
+  6. If GREEN: commit with 'feat({task_id}): {task_name}'
+  7. If RED after 3 attempts: report failure with root cause analysis
 
   RULES:
   - Do NOT modify test files
   - Do NOT modify files outside your task scope
-  - Do NOT skip tests"
+  - Do NOT skip tests
+  - OBEY all invariants in .harness/invariants.md
+
+  KNOWN FAILURE PATTERNS (learned from previous sprints):
+  {inject contents of .harness/skill-context/sprint-invariants.md if exists}"
 )
 ```
 
@@ -64,10 +89,18 @@ Agent(
 
 1. **Merge**: If worktrees were used, merge all back to main branch
 2. **Regression Check**: Run ALL passing tests — if any regression, STOP and fix
-3. **Guardian Review** (background):
+3. **Guardian Review** (background — results written to file):
    ```
    Agent(subagent_type: "code-reviewer", run_in_background: true,
-     prompt: "Review git diff HEAD~N: immutability, error handling, naming, no hardcoded values")
+     prompt: "Review git diff HEAD~N: immutability, error handling, naming, no hardcoded values.
+     
+     IMPORTANT: Write your findings to .harness/evidence/{FXXX}/guardian-wave-{N}.md
+     Format:
+     # Guardian Review — Wave {N}
+     ## CRITICAL: (list)
+     ## HIGH: (list)
+     ## MEDIUM: (list)
+     ## Summary: {pass/warn/block}")
    ```
 4. **Evaluator Checkpoint** (Clone scenario only — if `.harness/baseline/` exists):
    ```

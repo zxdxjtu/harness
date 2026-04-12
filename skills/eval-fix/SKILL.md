@@ -1,12 +1,12 @@
 ---
 name: eval-fix
-description: "GAN-style fix loop: read eval report → fix gaps → re-evaluate → repeat until convergence"
+description: "Adversarial fix loop: read eval report → fix gaps → re-evaluate → repeat until convergence"
 argument-hint: "<feature-id e.g. F001> --ref-url <url> --dev-url <url>"
 ---
 
 # Eval-Fix — Adversarial Fix-Evaluate Loop
 
-This command implements the GAN-inspired adversarial loop: Generator (fix) → Evaluator (assess) → Generator (fix) → Evaluator (assess) → ... until convergence or user intervention.
+This command implements an adversarial fix-evaluate loop: Generator (fix) → Evaluator (assess) → repeat until convergence or user intervention. The Generator and Evaluator are separate agents to prevent self-assessment bias.
 
 **Parameter**: $ARGUMENTS — feature ID and product URLs
 

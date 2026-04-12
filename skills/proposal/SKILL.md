@@ -10,6 +10,13 @@ You are guiding the user through a structured proposal process. The goal is to p
 
 ## Step 1: Initialize
 
+Check if Harness has been configured for this project:
+```bash
+test -f .harness/config.yaml && echo "CONFIG_OK" || echo "NO_CONFIG"
+```
+
+If NO_CONFIG: Tell the user "建议先运行 `/harness-init` 来适配项目规范，这样后续的 Sprint 和验证会更准确。按回车跳过，使用默认配置。" Wait for user response before continuing.
+
 Create `.harness/` directory if it doesn't exist:
 ```bash
 mkdir -p .harness/specs .harness/designs .harness/evidence
@@ -23,7 +30,7 @@ If none exist, start with F001.
 
 ## Step 2: Understand the Scenario
 
-Ask the user (via AskUserQuestion) which scenario applies:
+Ask the user which scenario applies:
 
 1. **New Project** — Building from scratch
 2. **Clone/Replicate** — Replicating an existing product
@@ -53,7 +60,7 @@ Based on the user's input and `$ARGUMENTS`, conduct an interactive dialogue to c
 2. **Acceptance Criteria**: Concrete, testable conditions (use "When X, then Y" format)
 3. **Invariants**: Rules that must always hold true
 4. **Technical Constraints**: Dependencies, platform requirements, performance targets
-5. **For Clone scenario**: Reference baseline report, UI fidelity requirements, Evaluator comparison criteria
+5. **For Clone scenario**: Reference baseline report, required fidelity level
 6. **For Incremental scenario**: Which existing modules are affected
 
 Keep asking until ALL acceptance criteria are precise enough to write automated tests for. No vague words like "should", "probably", "try to".
@@ -67,12 +74,38 @@ Pre-answer every question the implementing agent might ask:
 - Known pitfalls and their mitigations
 - File naming conventions to follow
 - Which existing code patterns to match
-- **For Clone scenario**:
-  - Reference product URL: [url]
-  - Development product URL: [url, e.g. http://localhost:3000]
-  - Baseline path: `.harness/baseline/`
-  - Evaluator comparison criteria: [which dimensions matter most]
-  - Acceptable fidelity threshold: [score out of 10, default 7]
+## Step 4.5: Define Evaluation Criteria
+
+Based on the nature of this feature, determine how its quality should be **quantitatively measured**. This is NOT a fixed template — different features need different dimensions.
+
+Ask the user:
+> "这个功能完成后，你最关心哪些方面来判断它做得好不好？"
+
+Then propose a set of evaluation dimensions with weights tailored to this feature. Examples:
+
+**For a UI feature** (e.g. dashboard page):
+| 维度 | 权重 | 含义 |
+|------|------|------|
+| 功能完整度 | 40% | 所有交互都能用 |
+| 视觉还原度 | 30% | 与设计稿一致 |
+| 技术质量 | 20% | 性能、错误处理 |
+| 无障碍性 | 10% | 键盘导航、屏幕阅读器 |
+
+**For a backend API** (e.g. payment service):
+| 维度 | 权重 | 含义 |
+|------|------|------|
+| 功能正确性 | 50% | 所有边界情况正确处理 |
+| 安全性 | 30% | 无注入、认证完备 |
+| 性能 | 20% | 响应时间 < 200ms |
+
+**For a CLI tool**:
+| 维度 | 权重 | 含义 |
+|------|------|------|
+| 功能完整度 | 50% | 所有子命令和参数工作 |
+| 错误信息质量 | 25% | 错误提示清晰可操作 |
+| 文档一致性 | 25% | --help 与实际行为一致 |
+
+Let the user confirm or adjust the dimensions and weights. Write the confirmed evaluation criteria into the Spec's `## Evaluation Criteria` section.
 
 ## Step 5: Generate Spec
 
@@ -96,6 +129,16 @@ As [role], I need [capability], so that [value]
 - Platform: [requirements]
 - Dependencies: [list with versions]
 - Performance: [targets]
+
+## Evaluation Criteria
+How to quantitatively judge this feature's quality (confirmed with user):
+
+| 维度 | 权重 | 通过标准 |
+|------|------|---------|
+| [dimension 1] | XX% | [concrete threshold] |
+| [dimension 2] | XX% | [concrete threshold] |
+
+Pass threshold: [X/10]
 
 ## Zero-Decision-Point Checklist
 - Test data: [path or generation method]

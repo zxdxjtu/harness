@@ -7,8 +7,14 @@
 ## 安装
 
 ```bash
-/install-plugin zxdxjtu/harness
+# 1. 添加 marketplace
+/plugin marketplace add zxdxjtu/harness
+
+# 2. 安装插件
+/plugin install harness@harness
 ```
+
+或者直接运行 `/plugin`，在 Discover 标签页中搜索 harness 安装。
 
 验证：输入 `/help`，看到 Harness 说明即成功。
 

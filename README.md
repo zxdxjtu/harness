@@ -5,7 +5,9 @@
 ## 安装
 
 ```bash
-/install-plugin zxdxjtu/harness
+# 添加 marketplace 并安装
+/plugin marketplace add zxdxjtu/harness
+/plugin install harness@harness
 ```
 
 ## 用法

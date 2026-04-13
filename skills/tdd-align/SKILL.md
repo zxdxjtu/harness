@@ -72,5 +72,20 @@ Run all tests. Confirm ALL FAIL. This proves tests are valid — they don't acci
 
 **Key Principle**: Once human approves these tests, they become the SOLE standard for implementation. The agent's goal is to make them GREEN.
 
-## Next Step
-After approval, tell the user to run: `/decompose $ARGUMENTS`
+## Next Step — Auto-Navigate
+
+1. Read the `flow` field from `.harness/specs/{FXXX}-*.md`
+2. Display progress visualization:
+
+```
+📋 SDD 进度 — {FXXX}: {feature name}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ proposal  →  ✅ tdd-align  →  ⬜ {next_phase}  →  ...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+当前阶段: tdd-align (测试对齐) ✅ 已完成
+下一阶段: {next_phase} ({description})
+```
+
+3. Ask naturally: "测试对齐完成，共 {N} 个测试（V1: {x}, V2: {y}, V3: {z}），全部 RED。下一步是 **{next phase}**（{description}）。是否继续？"
+4. If user confirms → execute next phase's skill logic directly
+5. If flow says next is `implement` (SMALL complexity, no decompose) → execute implementation directly without task DAG

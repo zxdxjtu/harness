@@ -1,0 +1,51 @@
+{
+  "name": "Full-Stack Application",
+  "description": "前端 + 后端 + 数据库的全栈应用评估",
+  "dimensions": [
+    {
+      "id": "spec-compliance",
+      "name": "Spec Compliance",
+      "weight": 35,
+      "method": "automated",
+      "check": "逐项验证每个 AC 对应的测试通过，行为与 spec 描述一致。检查所有 AC 状态。"
+    },
+    {
+      "id": "architecture-alignment",
+      "name": "Architecture Alignment",
+      "weight": 25,
+      "method": "agent-review",
+      "check": "比对实际 import/依赖与 design doc 和 AGENT.md 边界定义。检查层级违反、循环依赖、模块职责越界。"
+    },
+    {
+      "id": "test-coverage",
+      "name": "Test Coverage",
+      "weight": 15,
+      "method": "automated",
+      "check": "运行覆盖率工具，检查阈值 ≥80%。验证 spec 中的边界用例和 invariant 均有对应测试。"
+    },
+    {
+      "id": "code-quality",
+      "name": "Code Quality",
+      "weight": 15,
+      "method": "agent-review",
+      "check": "Lint 结果无 error。圈复杂度 ≤10。命名一致性。错误处理完整（无 swallowed errors）。不可变模式遵守。"
+    },
+    {
+      "id": "security",
+      "name": "Security Posture",
+      "weight": 10,
+      "method": "agent-review",
+      "check": "无硬编码密钥/token。输入校验完整。无 SQL 注入、XSS、CSRF 风险。认证/授权逻辑正确。"
+    }
+  ],
+  "scoring_calibration": {
+    "10": "完美实现，超出 spec 要求",
+    "8-9": "满足所有 spec 要求，仅有微小风格问题",
+    "6-7": "功能可用但存在 spec 缺口或质量问题",
+    "4-5": "核心功能可用但有显著合规性或质量缺口",
+    "2-3": "部分功能可用，存在重大问题",
+    "1": "功能缺失或完全不可用"
+  },
+  "convergence_threshold": 7,
+  "stagnation_rounds": 2
+}

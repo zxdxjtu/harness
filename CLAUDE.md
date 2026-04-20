@@ -1,12 +1,24 @@
 # Harness Plugin
 
-This is a Claude Code marketplace plugin for Spec-Driven Development.
+Harness now targets multiple agent hosts.
 
-## Structure
-- `skills/` — Skills (each in `skills/{name}/SKILL.md`): proposal, tdd-align, decompose, sprint, verify, baseline, evaluate, eval-fix, etc.
-- `hooks/` — Stop hook for sprint auto-loop
-- `scripts/` — Sprint setup script
-- `docs/` — Framework documentation
+## Canonical Source Layout
 
-## Development
-When modifying skills, keep them project-agnostic. All state goes to `.harness/` in the user's project root.
+- `skills/` — canonical workflow definitions
+- `hooks/` — Claude-specific hook config and scripts
+- `scripts/` — shared automation helpers
+- `templates/` — spec, design, and evaluation templates
+- `docs/` — framework and compatibility documentation
+
+## Packaging Targets
+
+- `.claude-plugin/` — Claude Code plugin manifest and marketplace metadata
+- `.codex-plugin/` — Codex plugin manifest
+- `.agents/skills/` — agent-compatible skill discovery view for Codex/OpenCode-style loaders
+
+## Development Rules
+
+- Keep workflow logic canonical in `skills/`.
+- Treat `.claude-plugin/` and `.codex-plugin/` as packaging layers.
+- Keep Claude-specific hooks isolated from Codex/OpenCode packaging.
+- Keep skills project-agnostic. All runtime state belongs in `.harness/` inside the user's project.

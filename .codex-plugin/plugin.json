@@ -1,0 +1,40 @@
+{
+  "name": "harness",
+  "version": "0.2.0",
+  "description": "Spec-driven development workflow package for coding agents. Guides proposal, test alignment, decomposition, sprint execution, evaluation, verification, and evolution.",
+  "author": {
+    "name": "zxdxjtu",
+    "url": "https://github.com/zxdxjtu"
+  },
+  "homepage": "https://github.com/zxdxjtu/harness",
+  "repository": "https://github.com/zxdxjtu/harness",
+  "license": "MIT",
+  "keywords": [
+    "sdd",
+    "spec-driven",
+    "tdd",
+    "harness",
+    "sprint",
+    "agent-team",
+    "quality"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Harness",
+    "shortDescription": "Spec-driven workflow pack for serious software delivery",
+    "longDescription": "Harness packages a structured spec-to-verify workflow for coding agents, including proposal, test alignment, task decomposition, sprint execution, evaluation, verification, and evolution.",
+    "developerName": "zxdxjtu",
+    "category": "Productivity",
+    "capabilities": [
+      "Skills",
+      "Workflow"
+    ],
+    "websiteURL": "https://github.com/zxdxjtu/harness",
+    "brandColor": "#1F6FEB",
+    "defaultPrompt": [
+      "Use Harness to design and implement a new feature.",
+      "Run the spec-driven workflow for this change.",
+      "Use the proposal and verify skills for this task."
+    ]
+  }
+}

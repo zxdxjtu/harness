@@ -27,7 +27,13 @@ fi
 # Initialize injection tracking (deduplication within session)
 # Reset if file is older than 2 hours (proxy for new session)
 if [[ -f "$INJECTED_FILE" ]]; then
-  FILE_AGE=$(( $(date +%s) - $(stat -f %m "$INJECTED_FILE" 2>/dev/null || stat -c %Y "$INJECTED_FILE" 2>/dev/null || echo 0) ))
+  # GNU stat's -f means --file-system, not "format". It fails on '%m' but still
+  # writes filesystem info to stdout, which then contaminates the arithmetic
+  # expression and aborts the hook under `set -u`. Try GNU -c first, fall back
+  # to BSD/macOS -f, and guard with a numeric check either way.
+  MTIME=$(stat -c %Y "$INJECTED_FILE" 2>/dev/null || stat -f %m "$INJECTED_FILE" 2>/dev/null || echo 0)
+  [[ "$MTIME" =~ ^[0-9]+$ ]] || MTIME=0
+  FILE_AGE=$(( $(date +%s) - MTIME ))
   if [[ $FILE_AGE -gt 7200 ]]; then
     rm -f "$INJECTED_FILE"
   fi

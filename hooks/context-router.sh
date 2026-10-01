@@ -27,7 +27,9 @@ fi
 # Initialize injection tracking (deduplication within session)
 # Reset if file is older than 2 hours (proxy for new session)
 if [[ -f "$INJECTED_FILE" ]]; then
-  FILE_AGE=$(( $(date +%s) - $(stat -f %m "$INJECTED_FILE" 2>/dev/null || stat -c %Y "$INJECTED_FILE" 2>/dev/null || echo 0) ))
+  MTIME=$(stat -c %Y "$INJECTED_FILE" 2>/dev/null || stat -f %m "$INJECTED_FILE" 2>/dev/null || echo 0)
+  [[ "$MTIME" =~ ^[0-9]+$ ]] || MTIME=0
+  FILE_AGE=$(( $(date +%s) - MTIME ))
   if [[ $FILE_AGE -gt 7200 ]]; then
     rm -f "$INJECTED_FILE"
   fi
